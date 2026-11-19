@@ -9,6 +9,7 @@ export function useResource<T>(path: string, load: (path: string) => Promise<T>)
   const [resource, setResource] = useState<Resource<T>>({ status: 'loading' });
 
   useEffect(() => {
+    // Ignora respostas antigas após a troca do caminho ou a desmontagem do componente.
     let active = true;
     setResource({ status: 'loading' });
     load(path).then(

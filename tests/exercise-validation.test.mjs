@@ -9,7 +9,7 @@ import { validateExercise } from '../.github/scripts/validate-exercise.mjs';
 const repositoryRoot = path.resolve(import.meta.dirname, '..');
 function temp() { return fs.mkdtempSync(path.join(os.tmpdir(), 'octofit-validation-')); }
 function write(root, file, content) { const p = path.join(root, file); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, content); }
-function copyMetadata() { const root = temp(); fs.copyFileSync(path.join(repositoryRoot, 'README.md'), path.join(root, 'README.md')); fs.mkdirSync(path.join(root, 'docs'), { recursive: true }); fs.copyFileSync(path.join(repositoryRoot, 'docs/architecture.md'), path.join(root, 'docs/architecture.md')); fs.cpSync(path.join(repositoryRoot, '.github'), path.join(root, '.github'), { recursive: true });
+function copyMetadata() { const root = temp(); write(root, 'README.md', '# Exercício\n\n## Boas-vindas\n\n[Copiar exercício](https://github.com/new?template_owner=dev-pods&template_name=build-applications-w-copilot-agent-mode)\n\nEstá com dificuldades? 🤷\n'); fs.mkdirSync(path.join(root, 'docs'), { recursive: true }); fs.copyFileSync(path.join(repositoryRoot, 'docs/architecture.md'), path.join(root, 'docs/architecture.md')); fs.cpSync(path.join(repositoryRoot, '.github'), path.join(root, '.github'), { recursive: true });
   fs.cpSync(path.join(repositoryRoot, '.devcontainer'), path.join(root, '.devcontainer'), { recursive: true });
   for (const file of ['octofit-tracker/frontend/src/api/client.ts', ...Object.keys(protectedContracts)]) { fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true }); fs.copyFileSync(path.join(repositoryRoot, file), path.join(root, file)); }
   return root;
@@ -33,8 +33,8 @@ function completedFixture() {
   return root;
 }
 
-test('exercise metadata passes structural and safety validation', () => {
-  assert.doesNotThrow(() => validateExercise(repositoryRoot));
+test('exercise metadata passes structural and safety validation with a template README', () => {
+  assert.doesNotThrow(() => validateExercise(copyMetadata()));
 });
 
 test('diagram architecture is Mermaid and image assets are absent', () => {
@@ -62,8 +62,14 @@ test('copy link points to this template and review images use the template asset
 });
 
 test('starter scaffold does not pass learner grading before implementation', () => {
+  const root = copyAll();
+  const architecture = path.join(root, 'docs/architecture.md');
+  fs.writeFileSync(architecture, fs.readFileSync(architecture, 'utf8').replace(/^- Decisão da camada de apresentação:.*$/m, '- Decisão da camada de apresentação:'));
+  write(root, 'octofit-tracker/backend/src/models/User.ts', 'export const User = {};\n');
+  write(root, 'octofit-tracker/backend/src/services/octofitService.ts', '// not implemented yet\n');
+  write(root, 'octofit-tracker/frontend/src/components/Activities.tsx', 'export default function Activities() { return null; }\n');
   for (const name of ['step1-architecture', 'step2-data', 'step3-api', 'step4-frontend']) {
-    assert.throws(() => checks[name](repositoryRoot));
+    assert.throws(() => checks[name](root), name);
   }
 });
 
@@ -249,15 +255,21 @@ test('workflow-level write permissions are rejected', () => {
 
 test('etapa um exige um plano de arquitetura preenchido', () => {
   const root = copyAll();
-  assert.throws(() => checks['step1-architecture'](root), /Architecture plan must complete/);
   const architecture = path.join(root, 'docs/architecture.md');
-  fs.writeFileSync(architecture, fs.readFileSync(architecture, 'utf8').replaceAll(/^(- .+):\s*$/gm, '$1: Aplicar os contratos e preservar os limites entre camadas.'));
+  const completed = fs.readFileSync(architecture, 'utf8');
+  const incomplete = completed.replace(/^- Decisão da camada de apresentação:.*$/m, '- Decisão da camada de apresentação:');
+  assert.notEqual(incomplete, completed);
+  fs.writeFileSync(architecture, incomplete);
+  assert.throws(() => checks['step1-architecture'](root), /Architecture plan must complete/);
+  fs.writeFileSync(architecture, completed);
   assert.doesNotThrow(() => checks['step1-architecture'](root));
 });
 
 test('data grader rejects placeholder seed script', () => {
   const root = copyAll();
-  assert.throws(() => checks['step2-data'](root), /required validation|placeholder/);
+  assert.doesNotThrow(() => checks['step2-data'](root));
+  write(root, 'octofit-tracker/backend/src/scripts/seed.ts', '// TODO: implementar seed\n');
+  assert.throws(() => checks['step2-data'](root), /placeholder/);
 });
 
 test('frontend grader requires shared API usage and visible states', () => {
