@@ -43,15 +43,13 @@ flowchart LR
 
 ## Decisões de implementação
 
-Registre seu plano aqui antes de editar o código.
-
-- Decisão da camada de apresentação:
-- Decisão da camada de lógica:
-- Decisão da camada de dados:
-- Abordagem para registro de atividades:
-- Abordagem para gerenciamento de equipes:
-- Abordagem para o placar:
-- Abordagem para sugestões de treino:
+- Decisão da camada de apresentação: cada tela consulta a API pelo cliente compartilhado, com estados acessíveis de carregamento, vazio e erro. A tela de sugestões consulta inicialmente a pessoa de demonstração Mona.
+- Decisão da camada de lógica: os serviços validam entradas e referências antes de gravar; as rotas mantêm os formatos de resposta do contrato e encaminham erros ao tratamento central.
+- Decisão da camada de dados: os esquemas Mongoose exigem os campos essenciais e valores numéricos válidos. O seed permanece idempotente, preserva registros existentes e reconcilia a equipe anterior das pessoas de demonstração.
+- Abordagem para registro de atividades: validar IDs existentes, tipo e duração de pelo menos um minuto; calcular um ponto por minuto e registrar a data de criação.
+- Abordagem para gerenciamento de equipes: validar nome, mascote e IDs existentes dos integrantes; persistir os integrantes na equipe e retornar os mesmos dados na listagem.
+- Abordagem para o placar: somar os pontos por equipe, incluindo equipes sem atividades com zero pontos; ordenar por pontuação decrescente e nome em empates, atribuindo posições sequenciais.
+- Abordagem para sugestões de treino: procurar a pessoa pelo e-mail, priorizar treinos correspondentes à sua meta e, se necessário, ao foco da atividade mais recente; explicar o motivo em português e retornar lista vazia quando não houver correspondência.
 
 ## Plano de testes
 
@@ -62,3 +60,5 @@ Registre os comandos executados e o significado de cada falha.
 - Testes do frontend: `npm test --prefix octofit-tracker/frontend`
 - Compilação do backend: `npm run build --prefix octofit-tracker/backend`
 - Compilação do frontend: `npm run build --prefix octofit-tracker/frontend`
+
+Resultado da implementação: os contratos de dados, API e frontend e as duas compilações passaram. As falhas anteriores indicavam validações ausentes, serviços incompletos e telas ainda não conectadas à API.

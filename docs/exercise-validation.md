@@ -23,6 +23,8 @@ Copie a saída para `protectedContracts` em `.github/scripts/grade-step.mjs`.
 
 Essas proteções evitam alterações acidentais ou geradas por IA, como o modo agent editando um teste ou script npm para fazê-lo passar. Elas não são uma defesa contra adulteração deliberada. As pessoas participantes são proprietárias da cópia do repositório, incluindo o avaliador e os workflows das etapas; portanto, a avaliação é um feedback formativo que libera a etapa seguinte, não uma avaliação protegida. O job de mantenedor `validate-exercise.yml` é executado somente no repositório de template.
 
+Os testes de validação usam cópias temporárias com um README de template e cenários inicial e concluído explícitos. Assim, também podem ser executados em uma cópia personalizada já implementada. O comando `validate-exercise.mjs`, por outro lado, verifica o README real e é destinado ao repositório de template.
+
 ## Lista de verificação para redefinição e publicação
 
 1. Confirme que o repositório está configurado como template e que `0-start-exercise.yml` possui o gatilho automático `push`.
